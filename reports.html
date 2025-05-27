@@ -1,0 +1,71 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ar">
+<head>...</head>
+<body>
+  <header><h1>مكتبة الدحيح</h1>
+    <nav style="text-align:center; margin-top:10px;">
+      <a href="reports.html" class="btn" style="background:#fff; color:var(--primary-color); border:2px solid var(--primary-color);">تقارير المبيعات</a>
+    </nav>
+  </header>
+  <main>... (باقي محتوى صفحة البيع والقائمة) ...</main>
+</body>
+</html>
+
+<!-- reports.html -->
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تقارير المبيعات - مكتبة الدحيح</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {--primary-color:#2E7D32;--light-color:#f0f2f5;--card-bg:#fff;--text-color:#333;--border-radius:10px;--transition:0.3s;}
+    body {font-family:'Cairo',sans-serif; background:var(--light-color); margin:0; padding:20px; color:var(--text-color); direction:rtl;}
+    h1{font-weight:700;text-align:center;color:var(--primary-color);}
+    .card{background:var(--card-bg);border-radius:var(--border-radius);padding:20px;max-width:800px;margin:20px auto;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+    label{display:block;margin:10px 0;font-weight:600;}
+    input{padding:8px;width:100%;max-width:300px;border:1px solid #ddd;border-radius:var(--border-radius);}
+    .btn{display:inline-block;padding:10px 20px;background:var(--primary-color);color:#fff;border:none;border-radius:var(--border-radius);cursor:pointer;transition:background var(--transition);}    
+    .btn:hover{background:#27632a;}
+    table{width:100%;border-collapse:collapse;margin-top:20px;}
+    th,td{padding:10px;border:1px solid #eee;text-align:center;}
+    th{background:#e8f5e9;color:var(--primary-color);}
+  </style>
+</head>
+<body>
+  <h1>تقارير المبيعات</h1>
+  <div class="card">
+    <label>من تاريخ: <input type="date" id="startDate" /></label>
+    <label>إلى تاريخ: <input type="date" id="endDate" /></label>
+    <button id="loadReport" class="btn">تحميل التقرير</button>
+    <div id="reportResult"></div>
+  </div>
+  <script>
+    const SS_ID='12GRlUWqQ4p0Ecu7Sx16waKIfjWCy3L1-OVk-joU6EWI';
+    const API_KEY='AIzaSyBvcUFJXOXRs_eaQophaVYGHrybAjaWcZg';
+    const SALES_RANGE='المبيعات!A4:D100';
+
+    document.getElementById('loadReport').addEventListener('click',async()=>{
+      const start=document.getElementById('startDate').value;
+      const end=document.getElementById('endDate').value;
+      if(!start||!end){alert('اختر النطاق');return;}
+      const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SS_ID}/values/${encodeURIComponent(SALES_RANGE)}?key=${API_KEY}`);
+      const data=await res.json();
+      const rows=(data.values||[]).map(r=>({date:new Date(r[0]),product:r[1],total:parseFloat(r[2]),qty:parseInt(r[3])}));
+      const filtered=rows.filter(r=>r.date>=new Date(start)&&r.date<=new Date(end));
+      // حسابات
+      const totalSales=filtered.reduce((sum,r)=>sum+r.total,0);
+      const perProduct={};
+      filtered.forEach(r=>{ if(!perProduct[r.product]) perProduct[r.product]={qty:0,total:0}; perProduct[r.product].qty+=r.qty; perProduct[r.product].total+=r.total; });
+      // عرض
+      let html=`<h2>إجمالي المبيعات: ${totalSales.toFixed(2)}</h2>
+      <table><tr><th>المنتج</th><th>الكمية المباعة</th><th>الإجمالي</th></tr>`;
+      for(const p in perProduct){html+=`<tr><td>${p}</td><td>${perProduct[p].qty}</td><td>${perProduct[p].total.toFixed(2)}</td></tr>`;} 
+      html+='</table>';
+      document.getElementById('reportResult').innerHTML=html;
+    });
+  </script>
+</body>
+</html>
