@@ -1,60 +1,72 @@
 <!DOCTYPE html>
-<html lang="ار">
+<html lang="ar">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>مكتبة المنتجات</title>
+  <title>مكتبة الدحيح</title>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; padding: 20px; background: #f9f9f9; }
-    h1 { text-align: center; color: #333; }
-    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .search-input, .sale-input, .sale-select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    .sale-input { width: 80px; margin-right: 10px; }
-    .sale-select { flex: 1; margin-right: 10px; }
-    .btn { padding: 8px 12px; background: #4CAF50; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; margin: 0; padding: 0; background: #f0f2f5; }
+    header { background: #4CAF50; color: #fff; padding: 20px; text-align: center; }
+    main { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+    .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; padding: 20px; }
+    h1, h2 { margin: 0; }
+    .flex { display: flex; align-items: center; }
+    .flex.space-between { justify-content: space-between; }
+    .sale-section input, .sale-section select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-left: 10px; }
+    .sale-section label { margin-left: 10px; }
+    .btn { padding: 10px 16px; background: #4CAF50; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
     .btn:hover { background: #45a049; }
-    table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 20px; }
-    th, td { padding: 12px 15px; text-align: center; }
-    th { background: #4CAF50; color: #fff; cursor: pointer; user-select: none; position: relative; }
-    th:hover { background: #45a049; }
-    th .arrow { position: absolute; right: 10px; font-size: 0.8em; }
-    tr:nth-child(even) { background: #f2f2f2; }
-    #message { margin-top: 20px; color: #d9534f; text-align: center; }
-    .loader { border: 6px solid #f3f3f3; border-top: 6px solid #4CAF50; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 40px auto; display: none; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
+    #totalDisplay { font-weight: bold; margin-right: auto; color: #333; }
+    .search-input { width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+    th { background: #f7f7f7; cursor: pointer; position: relative; }
+    th .arrow { margin-left: 5px; font-size: 0.8em; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    #message { color: #d9534f; margin-top: 10px; text-align: center; }
   </style>
 </head>
 <body>
-  <h1>نظام إدارة مكتبة</h1>
+  <header>
+    <h1>مكتبة الدحيح</h1>
+  </header>
+  <main>
+    <section class="card sale-section">
+      <h2>تنفيذ بيع</h2>
+      <div class="flex space-between">
+        <label>
+          المنتج:
+          <select id="saleProduct">
+            <option value="">اختر منتجًا</option>
+          </select>
+        </label>
+        <label>
+          الكمية:
+          <input id="saleQty" type="number" min="1" placeholder="0" />
+        </label>
+        <span id="totalDisplay">الإجمالي: 0.00</span>
+        <button id="saleBtn" class="btn">تنفيذ البيع</button>
+      </div>
+      <div id="message"></div>
+    </section>
 
-  <!-- قسم البيع -->
-  <div class="toolbar">
-    <select id="saleProduct" class="sale-select">
-      <option value="">اختر منتجًا للبيع</option>
-    </select>
-    <input id="saleQty" type="number" min="1" placeholder="الكمية" class="sale-input" />
-    <button id="saleBtn" class="btn">تنفيذ البيع</button>
-  </div>
-
-  <!-- شريط البحث -->
-  <div class="toolbar">
-    <input id="searchBox" class="search-input" placeholder="ابحث عن منتج..." />
-    <div id="loader" class="loader"></div>
-  </div>
-
-  <!-- جدول المنتجات -->
-  <table id="products-table">
-    <thead>
-      <tr>
-        <th data-key="0">المنتج <span class="arrow"></span></th>
-        <th data-key="1">السعر <span class="arrow"></span></th>
-        <th data-key="2">الكمية <span class="arrow"></span></th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <div id="message"></div>
+    <section class="card">
+      <div class="flex space-between">
+        <h2>قائمة المنتجات</h2>
+        <input id="searchBox" class="search-input" placeholder="ابحث عن منتج..." />
+      </div>
+      <table id="products-table">
+        <thead>
+          <tr>
+            <th data-key="0">المنتج <span class="arrow"></span></th>
+            <th data-key="1">السعر <span class="arrow"></span></th>
+            <th data-key="2">الكمية <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
 
   <script>
     const SPREADSHEET_ID = '12GRlUWqQ4p0Ecu7Sx16waKIfjWCy3L1-OVk-joU6EWI';
@@ -63,36 +75,35 @@
     const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhnvFQf9Sb1fnOcAfEb9Gkdzc6WavGmFDPHlCAFWfEMPyX9WIoKg1FOJ1Qz2DOUYfR/exec';
 
     let products = [];
-    const tbody = document.querySelector('#products-table tbody');
-    const loader = document.getElementById('loader');
-    const message = document.getElementById('message');
-    const searchBox = document.getElementById('searchBox');
     const saleProduct = document.getElementById('saleProduct');
-    const saleQty = document.getElementById('saleQty');
-    const saleBtn = document.getElementById('saleBtn');
+    const saleQty     = document.getElementById('saleQty');
+    const totalDisplay= document.getElementById('totalDisplay');
+    const saleBtn     = document.getElementById('saleBtn');
+    const message     = document.getElementById('message');
+    const searchBox   = document.getElementById('searchBox');
+    const tbody       = document.querySelector('#products-table tbody');
 
+    // جلب وعرض المنتجات
     async function fetchProducts() {
-      showMessage('');
-      showLoader(true);
       try {
         const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(RANGE)}?key=${API_KEY}`);
         const data = await res.json();
-        if (!data.values) return showMessage('لا توجد بيانات في الشيت.');
-        products = data.values.map(r => ({ name: r[0], price: parseFloat(r[1]) || 0, qty: parseInt(r[2]) || 0 }));
-        populateSaleOptions();
-        renderTable(products);
-      } catch (e) {
-        showMessage('خطأ في جلب البيانات.');
-      } finally { showLoader(false); }
+        products = (data.values||[]).map(r => ({ name: r[0], price: parseFloat(r[1])||0, qty: parseInt(r[2])||0 }));
+        populateSaleOptions(); renderTable(products);
+      } catch {
+        console.error('خطأ في جلب المنتجات');
+      }
     }
 
+    // تعبئة قائمة البيع
     function populateSaleOptions() {
-      saleProduct.innerHTML = '<option value="">اختر منتجًا للبيع</option>';
-      products.forEach((p, i) => {
+      saleProduct.innerHTML = '<option value="">اختر منتجًا</option>';
+      products.forEach((p,i) => {
         saleProduct.innerHTML += `<option value="${i}">${p.name} (متاح: ${p.qty})</option>`;
       });
     }
 
+    // إعادة عرض الجدول
     function renderTable(list) {
       tbody.innerHTML = '';
       list.forEach(p => {
@@ -100,56 +111,56 @@
       });
     }
 
+    // حساب الإجمالي عند اختيار أو تغيير الكمية
+    function updateTotal() {
+      const idx = saleProduct.value;
+      const qty = parseInt(saleQty.value) || 0;
+      const price = idx!==''? products[idx].price : 0;
+      totalDisplay.textContent = `الإجمالي: ${(price*qty).toFixed(2)}`;
+    }
+
+    saleProduct.addEventListener('change', updateTotal);
+    saleQty.addEventListener('input', updateTotal);
+
+    // تنفيذ البيع
     saleBtn.addEventListener('click', () => {
       const idx = saleProduct.value;
       const soldQty = parseInt(saleQty.value);
-      if (idx === '' || !soldQty) return showMessage('اختر منتجًا وحدد كمية.');
+      if(idx===''||!soldQty){ message.textContent='اختر منتجًا وحدد كمية.'; return; }
       const p = products[idx];
-      if (soldQty > p.qty) return showMessage('الكمية المطلوبة أكبر من المتاح.');
+      if(soldQty>p.qty){ message.textContent='الكمية المطلوبة أكبر من المتاح.'; return; }
       const date = new Date().toLocaleString('ar-EG');
-      const total = (p.price * soldQty).toFixed(2);
-
-      const url = `${APP_SCRIPT_URL}` +
-        `?action=appendSale` +
-        `&date=${encodeURIComponent(date)}` +
-        `&product=${encodeURIComponent(p.name)}` +
-        `&total=${encodeURIComponent(total)}` +
-        `&soldQty=${encodeURIComponent(soldQty)}`;
-
+      const total= (p.price*soldQty).toFixed(2);
+      const url = `${APP_SCRIPT_URL}?action=appendSale&date=${encodeURIComponent(date)}`+
+                  `&product=${encodeURIComponent(p.name)}`+
+                  `&total=${encodeURIComponent(total)}`+
+                  `&soldQty=${encodeURIComponent(soldQty)}`;
       fetch(url)
-        .then(res => res.json())
-        .then(res => {
-          if (res.success) {
-            p.qty -= soldQty;
-            renderTable(products);
-            populateSaleOptions();
-            saleQty.value = '';
-            showMessage('تم تسجيل البيع.');
-          } else {
-            showMessage('فشل في تسجيل البيع.');
-          }
+        .then(r=>r.json())
+        .then(res=>{
+          if(res.success){
+            p.qty -= soldQty; renderTable(products); populateSaleOptions(); saleQty.value=''; updateTotal(); message.textContent='تم تسجيل البيع.';
+          } else message.textContent='فشل في تسجيل البيع.';
         })
-        .catch(() => showMessage('خطأ في الاتصال بخدمة التسجيل.'));
+        .catch(()=> message.textContent='خطأ في الاتصال.');
     });
 
-    document.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
-      const key = ['name', 'price', 'qty'][th.dataset.key];
+    // فرز الجدول
+    document.querySelectorAll('th').forEach(th=> th.addEventListener('click', ()=>{
+      const key=['name','price','qty'][th.dataset.key];
       const asc = th.classList.toggle('asc');
-      document.querySelectorAll('.arrow').forEach(a => a.textContent = '');
-      th.querySelector('.arrow').textContent = asc ? '▲' : '▼';
-      products.sort((a, b) => asc ? (a[key] > b[key] ? 1 : -1) : (a[key] < b[key] ? 1 : -1));
-      renderTable(products);
+      document.querySelectorAll('.arrow').forEach(a=>a.textContent='');
+      th.querySelector('.arrow').textContent= asc?'▲':'▼';
+      products.sort((a,b)=> asc? (a[key]>b[key]?1:-1):(a[key]<b[key]?1:-1)); renderTable(products);
     }));
 
-    searchBox.addEventListener('input', () => {
-      const term = searchBox.value.trim().toLowerCase();
-      renderTable(products.filter(p => p.name.toLowerCase().includes(term)));
+    // بحث تفاعلي
+    searchBox.addEventListener('input',()=>{
+      const term= searchBox.value.trim().toLowerCase(); renderTable(products.filter(p=>p.name.toLowerCase().includes(term)));
     });
 
-    function showMessage(msg) { message.textContent = msg; }
-    function showLoader(v) { loader.style.display = v ? 'block' : 'none'; }
-
-    document.addEventListener('DOMContentLoaded', fetchProducts);
+    // بدء العمل
+    fetchProducts();
   </script>
 </body>
 </html>
