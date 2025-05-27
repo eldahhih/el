@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مكتبة المنتجات</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; padding: 20px; background: #f9f9f9; }
+    h1 { text-align: center; color: #333; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .search-input, .sale-input, .sale-select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .sale-input { width: 80px; margin-right: 10px; }
+    .sale-select { flex: 1; margin-right: 10px; }
+    .btn { padding: 8px 12px; background: #4CAF50; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background: #45a049; }
+    table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 20px; }
+    th, td { padding: 12px 15px; text-align: center; }
+    th { background: #4CAF50; color: #fff; cursor: pointer; user-select: none; position: relative; }
+    th:hover { background: #45a049; }
+    th .arrow { position: absolute; right: 10px; font-size: 0.8em; }
+    tr:nth-child(even) { background: #f2f2f2; }
+    #message { margin-top: 20px; color: #d9534f; text-align: center; }
+    .loader { border: 6px solid #f3f3f3; border-top: 6px solid #4CAF50; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 40px auto; display: none; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <h1>نظام إدارة مكتبة</h1>
+
+  <!-- قسم البيع -->
+  <div class="toolbar">
+    <select id="saleProduct" class="sale-select">
+      <option value="">اختر منتجًا للبيع</option>
+    </select>
+    <input id="saleQty" type="number" min="1" placeholder="الكمية" class="sale-input" />
+    <button id="saleBtn" class="btn">تنفيذ البيع</button>
+  </div>
+
+  <!-- شريط البحث -->
+  <div class="toolbar">
+    <input id="searchBox" class="search-input" placeholder="ابحث عن منتج..." />
+    <div id="loader" class="loader"></div>
+  </div>
+
+  <!-- جدول المنتجات -->
+  <table id="products-table">
+    <thead>
+      <tr>
+        <th data-key="0">المنتج <span class="arrow"></span></th>
+        <th data-key="1">السعر <span class="arrow"></span></th>
+        <th data-key="2">الكمية <span class="arrow"></span></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="message"></div>
+
+  <script>
+    const SPREADSHEET_ID = '12GRlUWqQ4p0Ecu7Sx16waKIfjWCy3L1-OVk-joU6EWI';
+    const API_KEY = 'AIzaSyBvcUFJXOXRs_eaQophaVYGHrybAjaWcZg';
+    const RANGE = 'منتجات!A4:C100';
+    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxv_7eCzPuWlExnTBM6n6FucA5enbUdKTJnjrMNshL7X-J7NyDKMJk6sBXlc-Gr3eyr/exec';
+
+    let products = [];
+    const tbody = document.querySelector('#products-table tbody');
+    const loader = document.getElementById('loader');
+    const message = document.getElementById('message');
+    const searchBox = document.getElementById('searchBox');
+    const saleProduct = document.getElementById('saleProduct');
+    const saleQty = document.getElementById('saleQty');
+    const saleBtn = document.getElementById('saleBtn');
+
+    async function fetchProducts() {
+      showMessage('');
+      showLoader(true);
+      try {
+        const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(RANGE)}?key=${API_KEY}`);
+        const data = await res.json();
+        if (!data.values) return showMessage('لا توجد بيانات في الشيت.');
+        products = data.values.map(r => ({ name: r[0], price: parseFloat(r[1])||0, qty: parseInt(r[2])||0 }));
+        populateSaleOptions();
+        renderTable(products);
+      } catch (e) {
+        showMessage('خطأ في جلب البيانات.');
+      } finally { showLoader(false); }
+    }
+
+    function populateSaleOptions() {
+      saleProduct.innerHTML = '<option value="">اختر منتجًا للبيع</option>';
+      products.forEach((p,i) => {
+        saleProduct.innerHTML += `<option value="${i}">${p.name} (متاح: ${p.qty})</option>`;
+      });
+    }
+
+    function renderTable(list) {
+      tbody.innerHTML = '';
+      list.forEach(p => {
+        tbody.innerHTML += `<tr><td>${p.name}</td><td>${p.price.toFixed(2)}</td><td>${p.qty}</td></tr>`;
+      });
+    }
+
+    saleBtn.addEventListener('click', async () => {
+      const idx = saleProduct.value;
+      const soldQty = parseInt(saleQty.value);
+      if (idx===''||!soldQty) return showMessage('اختر منتجًا وحدد كمية.');
+      const p = products[idx];
+      if (soldQty>p.qty) return showMessage('الكمية المطلوبة أكبر من المتاح.');
+      const date = new Date().toLocaleString('ar-EG');
+      const total = (p.price * soldQty).toFixed(2);
+      const payload = { date, product: p.name, total, soldQty };
+      try {
+        const resp = await fetch(APP_SCRIPT_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+        });
+        const res = await resp.json();
+        if (res.success) {
+          p.qty -= soldQty;
+          renderTable(products);
+          populateSaleOptions();
+          saleQty.value='';
+          showMessage('تم تسجيل البيع.');
+        } else showMessage('فشل في تسجيل البيع.');
+      } catch {
+        showMessage('خطأ في الاتصال بخدمة التسجيل.');
+      }
+    });
+
+    // فرز
+    document.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
+      const key = ['name','price','qty'][th.dataset.key];
+      const asc = th.classList.toggle('asc');
+      document.querySelectorAll('.arrow').forEach(a=>a.textContent='');
+      th.querySelector('.arrow').textContent = asc?'▲':'▼';
+      products.sort((a,b)=> asc? (a[key]>b[key]?1:-1) : (a[key]<b[key]?1:-1));
+      renderTable(products);
+    }));
+
+    // بحث
+    searchBox.addEventListener('input',()=>{
+      const term=searchBox.value.trim().toLowerCase();
+      renderTable(products.filter(p=>p.name.toLowerCase().includes(term)));
+    });
+
+    function showMessage(msg){ message.textContent=msg; }
+    function showLoader(v){ loader.style.display=v?'block':'none'; }
+
+    document.addEventListener('DOMContentLoaded', fetchProducts);
+  </script>
+</body>
+</html>
