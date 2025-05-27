@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ار">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -60,7 +60,7 @@
     const SPREADSHEET_ID = '12GRlUWqQ4p0Ecu7Sx16waKIfjWCy3L1-OVk-joU6EWI';
     const API_KEY = 'AIzaSyBvcUFJXOXRs_eaQophaVYGHrybAjaWcZg';
     const RANGE = 'منتجات!A4:C100';
-    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuTzTKClkvHwQZuvRfHRThwptftBaF5mxt8A60n1VRmDp40c13ZUo_xdds7l9A8zvr/exec';
+    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhnvFQf9Sb1fnOcAfEb9Gkdzc6WavGmFDPHlCAFWfEMPyX9WIoKg1FOJ1Qz2DOUYfR/exec';
 
     let products = [];
     const tbody = document.querySelector('#products-table tbody');
@@ -78,7 +78,7 @@
         const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(RANGE)}?key=${API_KEY}`);
         const data = await res.json();
         if (!data.values) return showMessage('لا توجد بيانات في الشيت.');
-        products = data.values.map(r => ({ name: r[0], price: parseFloat(r[1])||0, qty: parseInt(r[2])||0 }));
+        products = data.values.map(r => ({ name: r[0], price: parseFloat(r[1]) || 0, qty: parseInt(r[2]) || 0 }));
         populateSaleOptions();
         renderTable(products);
       } catch (e) {
@@ -88,7 +88,7 @@
 
     function populateSaleOptions() {
       saleProduct.innerHTML = '<option value="">اختر منتجًا للبيع</option>';
-      products.forEach((p,i) => {
+      products.forEach((p, i) => {
         saleProduct.innerHTML += `<option value="${i}">${p.name} (متاح: ${p.qty})</option>`;
       });
     }
@@ -100,50 +100,54 @@
       });
     }
 
-    saleBtn.addEventListener('click', async () => {
+    saleBtn.addEventListener('click', () => {
       const idx = saleProduct.value;
       const soldQty = parseInt(saleQty.value);
-      if (idx===''||!soldQty) return showMessage('اختر منتجًا وحدد كمية.');
+      if (idx === '' || !soldQty) return showMessage('اختر منتجًا وحدد كمية.');
       const p = products[idx];
-      if (soldQty>p.qty) return showMessage('الكمية المطلوبة أكبر من المتاح.');
+      if (soldQty > p.qty) return showMessage('الكمية المطلوبة أكبر من المتاح.');
       const date = new Date().toLocaleString('ar-EG');
       const total = (p.price * soldQty).toFixed(2);
-      const payload = { date, product: p.name, total, soldQty };
-      try {
-        const resp = await fetch(APP_SCRIPT_URL, {
-          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
-        });
-        const res = await resp.json();
-        if (res.success) {
-          p.qty -= soldQty;
-          renderTable(products);
-          populateSaleOptions();
-          saleQty.value='';
-          showMessage('تم تسجيل البيع.');
-        } else showMessage('فشل في تسجيل البيع.');
-      } catch {
-        showMessage('خطأ في الاتصال بخدمة التسجيل.');
-      }
+
+      const url = `${APP_SCRIPT_URL}` +
+        `?action=appendSale` +
+        `&date=${encodeURIComponent(date)}` +
+        `&product=${encodeURIComponent(p.name)}` +
+        `&total=${encodeURIComponent(total)}` +
+        `&soldQty=${encodeURIComponent(soldQty)}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            p.qty -= soldQty;
+            renderTable(products);
+            populateSaleOptions();
+            saleQty.value = '';
+            showMessage('تم تسجيل البيع.');
+          } else {
+            showMessage('فشل في تسجيل البيع.');
+          }
+        })
+        .catch(() => showMessage('خطأ في الاتصال بخدمة التسجيل.'));
     });
 
-    // فرز
     document.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
-      const key = ['name','price','qty'][th.dataset.key];
+      const key = ['name', 'price', 'qty'][th.dataset.key];
       const asc = th.classList.toggle('asc');
-      document.querySelectorAll('.arrow').forEach(a=>a.textContent='');
-      th.querySelector('.arrow').textContent = asc?'▲':'▼';
-      products.sort((a,b)=> asc? (a[key]>b[key]?1:-1) : (a[key]<b[key]?1:-1));
+      document.querySelectorAll('.arrow').forEach(a => a.textContent = '');
+      th.querySelector('.arrow').textContent = asc ? '▲' : '▼';
+      products.sort((a, b) => asc ? (a[key] > b[key] ? 1 : -1) : (a[key] < b[key] ? 1 : -1));
       renderTable(products);
     }));
 
-    // بحث
-    searchBox.addEventListener('input',()=>{
-      const term=searchBox.value.trim().toLowerCase();
-      renderTable(products.filter(p=>p.name.toLowerCase().includes(term)));
+    searchBox.addEventListener('input', () => {
+      const term = searchBox.value.trim().toLowerCase();
+      renderTable(products.filter(p => p.name.toLowerCase().includes(term)));
     });
 
-    function showMessage(msg){ message.textContent=msg; }
-    function showLoader(v){ loader.style.display=v?'block':'none'; }
+    function showMessage(msg) { message.textContent = msg; }
+    function showLoader(v) { loader.style.display = v ? 'block' : 'none'; }
 
     document.addEventListener('DOMContentLoaded', fetchProducts);
   </script>
